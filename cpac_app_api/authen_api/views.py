@@ -70,7 +70,7 @@ class RegisterAPIView(APIView):
     def auth_register(self, request):
         token = request.headers.get('Authorization')
         if not token:
-            return {"error": "Token not provided"}
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
         headers = {
             "Authorization": token,
@@ -115,7 +115,7 @@ class LogoutAPIView(APIView):
     def post(self, request):
         token = request.headers.get("Authorization")
         if not token:
-            return Response({"error": "Token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
         headers = {
             "Authorization": token,
             "Content-Type": "application/json"
@@ -141,7 +141,7 @@ class UsersAPIView(APIView):
     def get(self,request):
         token = request.headers.get('Authorization')
         if not token:
-            return Response({"error": "Token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
         headers = {
             "Authorization": token,
@@ -164,6 +164,8 @@ class UsersAPIView(APIView):
 class UserProfileAPIView(APIView):
     def get(self,request):
         token = request.headers.get("Authorization")
+        if not token:
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
         headers={
             "Authorization":token,
@@ -190,7 +192,8 @@ class ManageuserAPIView(APIView):
 
         token = request.headers.get("Authorization")
         if not token:
-            return Response({"error": "Token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
+
         
         headers={
             "Authorization":token,
@@ -214,7 +217,8 @@ class ManageuserAPIView(APIView):
         
         token = request.headers.get("Authorization")
         if not token:
-            return Response({"error": "Token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         headers={
             "Authorization":token,
@@ -256,7 +260,8 @@ class ManageuserAPIView(APIView):
         # ดึง token จาก header
         token = request.headers.get("Authorization")
         if not token:
-            return Response({"error": "Token not provided"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         headers = {
             "Authorization": token,

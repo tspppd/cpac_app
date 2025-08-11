@@ -28,11 +28,15 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECRET_KEY = 'django-insecure-4w4kgcfhldxw0j8ejmbpmy-0!)9!k+0g3qbi@wwloc!g=ja-$g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["cpac-app.onrender.com", "localhost", "127.0.0.1"]
 
-CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # สำหรับ dev
+    "https://cpac-app.onrender.com",  # ถ้าเว็บ frontend deploy แล้ว
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,11 +47,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authen_api',
-    # 'corsheaders',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
-    # 'middleware.corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
