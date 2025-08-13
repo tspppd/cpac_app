@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECRET_KEY = 'django-insecure-4w4kgcfhldxw0j8ejmbpmy-0!)9!k+0g3qbi@wwloc!g=ja-$g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["cpac-app.onrender.com", "localhost", "127.0.0.1"]
 
