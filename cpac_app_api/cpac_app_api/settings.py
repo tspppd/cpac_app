@@ -36,7 +36,7 @@ ALLOWED_HOSTS = ["cpac-app.onrender.com", "localhost", "127.0.0.1","https://cpac
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # สำหรับ dev
     "https://cpac-app.onrender.com",  # ถ้าเว็บ frontend deploy แล้ว
-    "https://cpac-calculator-app.vercel.app",  # domain ของ frontend
+    "https://cpac-app.vercel.app",  # domain ของ frontend
 ]
 
 # ถ้าต้องการให้ส่ง cookie/token ไปด้วย
@@ -139,3 +139,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# settings.py
+STATIC_ROOT = BASE_DIR / "staticfiles"
