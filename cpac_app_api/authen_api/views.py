@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from urllib.parse import urljoin
 import logging
 # from serializers import UserUpdateSerializer
+from rest_framework.authentication import CSRFCheck
 
 load_dotenv()
 
@@ -24,7 +25,6 @@ userProfile_url = urljoin(BASE_AUTH_URL,"/api/profile") # ข้อมูลผ�
 
 class LoginAPIView(APIView):
     def post(self, request):
-        
         # รับ username และ password จาก body
         username = request.data.get('username')
         password = request.data.get('password')
@@ -34,11 +34,31 @@ class LoginAPIView(APIView):
 
         # เรียก auth_login แล้วส่งค่ากลับ
         auth_response = self.auth_login(username, password)
-
+        # print('auth_response',auth_response)
         if auth_response is None:
             return Response('Username Password invalid', status=status.HTTP_400_BAD_REQUEST)
-        if auth_response:
-            return Response(auth_response, status=status.HTTP_200_OK)
+        if auth_response is not None:
+            if auth_response['status']:
+                # print('Auth pass')
+                access_token = auth_response['data']['access_token']
+                # print('access_token',access_token)
+                response = Response(auth_response['data']['user'], status=status.HTTP_200_OK)
+                # print(response)
+                response.set_cookie( 
+                    key='access_token',
+                    value=access_token,
+                    httponly=True, # Production : True
+                    secure=True, # Production : True
+                    samesite="None", # Production : "None" , Dev : "Lax", "Strict"
+                    max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
+                    path='/'
+                )
+            else: 
+                response = Response(auth_response, status=status.HTTP_200_OK)
+
+            return response
+
+            # return Response(auth_response, status=status.HTTP_200_OK)
 
 
     def auth_login(self, username, password):
@@ -52,7 +72,6 @@ class LoginAPIView(APIView):
         }
 
         response = requests.post( login_url , headers=headers, json=data)
-        # response.raise_for_status()
         return response.json()
 
 
@@ -117,49 +136,43 @@ class RegisterAPIView(APIView):
 
 class LogoutAPIView(APIView):
     def post(self, request):
-        token = request.headers.get("Authorization")
-        if not token:
-            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-
-        try:
-            response = requests.post(logout_url, headers=headers)
-            # response.raise_for_status()
-            return Response(response, status=status.HTTP_200_OK)
-        except requests.RequestException as e:
-            # ดึงรายละเอียดจาก e.response ถ้ามี
-            error_detail = None
-            if hasattr(e, 'response') and e.response is not None:
-                error_detail = e.response.text
-            return Response({
-                "error": "Request to auth server failed",
-                "details": str(e),
-                "server_message": error_detail
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        response = Response({'message':"Logout Successful"}, status=status.HTTP_200_OK)
+        response.delete_cookie('access_token')
+        return response
+        
 
 class UsersAPIView(APIView):
     def get(self,request):
-
-        token = request.headers.get('Authorization')
-        token = request
-        if not token:
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
             return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
         headers = {
-            "Authorization": token,
+            "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
         }
 
         try:
             response = requests.get(user_url,headers=headers)
             response.raise_for_status()
-            users = response.json()
+            try:
+                users = response.json()
+            except ValueError:
+                return Response(
+                    {"error": "Invalid JSON in response from user API"},
+                    status=status.HTTP_502_BAD_GATEWAY
+                )
             return Response( users  # ✅ return รายชื่อ user กลับไปด้วย
             , status=status.HTTP_200_OK)
+        except requests.HTTPError as http_err:
+            return Response(
+                {
+                    "error": "User API returned an error",
+                    "status_code": response.status_code,
+                    "details": str(http_err)
+                },
+                status=response.status_code
+            )
         except requests.RequestException as e:
             return Response({
                 "error": "Getusers failed",
@@ -169,18 +182,16 @@ class UsersAPIView(APIView):
 
 class UserProfileAPIView(APIView):
     def get(self,request):
-        token = request.headers.get("Authorization")
-        # Response( request )
-        # token= request.access_token
-        if not token:
-            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        headers={
-            "Authorization":token,
-            "Content-Type": "application/json"
-        }
-
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
+            return Response({'error':'Token not Provided'},status=status.HTTP_401_UNAUTHORIZED)
         try:
+            headers={
+                "Authorization":f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
             response = requests.get(userProfile_url, headers=headers)
             currentUser = response.json()
             return Response(currentUser  # ✅ return รายชื่อ user กลับไปด้วย
@@ -194,16 +205,14 @@ class UserProfileAPIView(APIView):
 
 class ManageuserAPIView(APIView):
     def get(self,request,userId):
-
         userId_url = urljoin(BASE_AUTH_URL,f"/api/users/{userId}") # ข้อมูลผู้ใช้งานตาม id / GET, PATCH,DELETE
 
-        token = request.headers.get("Authorization")
-        if not token:
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
             return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        
         headers={
-            "Authorization":token,
+            "Authorization":f"Bearer {access_token}",
             "Content-Type":"application/json"
         }
         try:
@@ -222,13 +231,13 @@ class ManageuserAPIView(APIView):
     def patch(self,request,userId):
         userId_url = urljoin(BASE_AUTH_URL,f"/api/users/{userId}") # ข้อมูลผู้ใช้งานตาม id / GET, PATCH,DELETE
         
-        token = request.headers.get("Authorization")
-        if not token:
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
             return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
         headers={
-            "Authorization":token,
+            "Authorization":f"Bearer {access_token}",
             "Content-Type":"application/json"
         }
         
@@ -236,14 +245,14 @@ class ManageuserAPIView(APIView):
         if not data:
             return Response({"error": "No data provided for update"}, status=status.HTTP_400_BAD_REQUEST)
         
-        logger = logging.getLogger(__name__)
-        try:
-            data = request.data.copy()
-            data.pop("password",None)
-            data.pop("password_confirmation",None)
-        except Exception as e:
-            logger.error(f"Error processing request data: {str(e)}")
-            return {"error": "Invalid data format"}
+        # logger = logging.getLogger(__name__)
+        # try:
+        #     data = request.data.copy()
+        #     data.pop("password",None)
+        #     data.pop("password_confirmation",None)
+        # except Exception as e:
+        #     logger.error(f"Error processing request data: {str(e)}")
+        #     return {"error": "Invalid data format"}
         try:
             response = requests.patch(userId_url,headers=headers,json=data)
             if not response.ok:
@@ -252,7 +261,7 @@ class ManageuserAPIView(APIView):
                     "status_code": response.status_code,
                     "server_message": response.text
                 }, status=response.status_code)
-            response.raise_for_status()
+            # response.raise_for_status()
             edit_user = response.json()
             return Response( edit_user , status=status.HTTP_200_OK)
 
@@ -265,13 +274,13 @@ class ManageuserAPIView(APIView):
     def delete(self, request, userId):
         userId_url = urljoin(BASE_AUTH_URL,f"/api/users/{userId}") # ข้อมูลผู้ใช้งานตาม id / GET, PATCH,DELETE
         # ดึง token จาก header
-        token = request.headers.get("Authorization")
-        if not token:
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
             return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
         headers = {
-            "Authorization": token,
+            "Authorization":f"Bearer {access_token}",
             "Content-Type": "application/json"
         }
 
@@ -279,7 +288,7 @@ class ManageuserAPIView(APIView):
             # เรียก API ภายนอกเพื่อลบ user
             response = requests.delete(userId_url, headers=headers)
             response.raise_for_status()
-            return Response({"detail": "User deleted successfully"}, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_200_OK)
         
         except requests.HTTPError as e:
             # ดึงข้อความจาก API ภายนอกถ้ามี

@@ -33,15 +33,6 @@ DEBUG = False
 ALLOWED_HOSTS = ["cpac-app.onrender.com", "localhost", "127.0.0.1","https://cpac-calculator-app.vercel.app"]
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # สำหรับ dev
-    "https://cpac-app.onrender.com",  # ถ้าเว็บ frontend deploy แล้ว
-    "https://cpac-app.vercel.app",  # domain ของ frontend
-]
-
-# ถ้าต้องการให้ส่ง cookie/token ไปด้วย
-CORS_ALLOW_CREDENTIALS = True
-
 
 # Application definition
 
@@ -143,3 +134,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # settings.py
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+# ถ้าต้องการให้ส่ง cookie/token ไปด้วย
+CORS_ALLOW_CREDENTIALS = True
+# Http OnlyCookie
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_HTTPONLY = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "https://cpac-app.vercel.app",
+    "https://cpac-app.onrender.com",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # สำหรับ dev
+    "https://cpac-app.onrender.com",  # ถ้าเว็บ frontend deploy แล้ว
+    "https://cpac-app.vercel.app",  # domain ของ frontend
+]
