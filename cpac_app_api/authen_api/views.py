@@ -6,9 +6,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urljoin
 import logging
-# from serializers import UserUpdateSerializer
-from rest_framework.authentication import CSRFCheck
-
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 BASE_AUTH_URL = os.getenv('AUTH_URL')
@@ -75,69 +73,72 @@ class LoginAPIView(APIView):
         return response.json()
 
 
-
 class RegisterAPIView(APIView):
     def post(self, request):
         if not request.data:
             return Response({'error': 'Invalid Data'}, status=status.HTTP_400_BAD_REQUEST)
         
         auth_response = self.auth_register(request)
-
-        # ถ้ามี error ให้ส่ง status 400
-        if auth_response.get("error"):
-            return Response(auth_response, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(auth_response, status=status.HTTP_200_OK)
+        
+        # auth_register จะคืนค่าเป็น tuple (data, status_code)
+        response_data, response_status = auth_response
+        
+        return Response(response_data, status=response_status)
     
     
     def auth_register(self, request):
-        token = request.headers.get('Authorization')
-        if not token:
-            return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
+            return {"error": "Authorization token required"}, status.HTTP_401_UNAUTHORIZED
 
         headers = {
-            "Authorization": token,
+            "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
         }
-        logger = logging.getLogger(__name__)
 
         try:
-            data = request.data.copy()
-        except Exception as e:
-            logger.error(f"Error processing request data: {str(e)}")
-            return {"error": "Invalid data format"}
-
-        try:
+            data = request.data
             response = requests.post(register_url, headers=headers, json=data)
-            logger.info(f"Auth server responded: {response.status_code} - {response.text}")
             
-            # ถ้าไม่ใช่ 2xx ดึงข้อความ error กลับไปเป็น dict
-            if not response.ok:
-                return {
-                    "error": "Auth server returned error",
-                    "status_code": response.status_code,
-                    "server_message": response.text
-                }
+            # ถ้า Status Code เป็น 2xx ให้คืนค่า JSON ที่ได้
+            if response.ok:
+                return response.json(), response.status_code
             
-            # ถ้าเป็น JSON ให้ parse กลับไป
-            return response.json()
+            # ถ้า Status Code เป็น 4xx หรือ 5xx ให้คืนค่า JSON Error และ Status Code นั้นๆ
+            else:
+                return response.json(), response.status_code
 
-        except requests.RequestException as e:
-            error_detail = None
-            if hasattr(e, 'response') and e.response is not None:
-                error_detail = e.response.text
+        # จัดการเฉพาะ HTTPError ที่เกิดจาก response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # ดึง error JSON จาก response แล้วส่งกลับไป
+            return e.response.json(), e.response.status_code
+        
+        # จัดการ RequestException อื่นๆ (เช่น Network Error)
+        except requests.exceptions.RequestException as e: 
+            logger.error(f"Network error during registration: {str(e)}")
             return {
-                "error": "Request to auth server failed",
-                "details": str(e),
-                "server_message": error_detail
-            }
-
+                "error": "การเชื่อมต่อล้มเหลว",
+                "details": "ไม่สามารถติดต่อเซิร์ฟเวอร์หลักได้"
+            }, status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+        # จัดการ Exception อื่นๆ ที่ไม่คาดคิด
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return {
+                "error": "เกิดข้อผิดพลาดไม่ทราบสาเหตุ",
+                "details": str(e)
+            }, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class LogoutAPIView(APIView):
     def post(self, request):
         response = Response({'message':"Logout Successful"}, status=status.HTTP_200_OK)
-        response.delete_cookie('access_token')
+        response.delete_cookie(
+            key='access_token',
+            path='/',
+            samesite="None",
+ 
+        )
         return response
         
 
@@ -256,12 +257,8 @@ class ManageuserAPIView(APIView):
         try:
             response = requests.patch(userId_url,headers=headers,json=data)
             if not response.ok:
-                return Response({
-                    "error": "Failed to update user",
-                    "status_code": response.status_code,
-                    "server_message": response.text
-                }, status=response.status_code)
-            # response.raise_for_status()
+                return Response(response.text, status=response.status_code)
+            response.raise_for_status()
             edit_user = response.json()
             return Response( edit_user , status=status.HTTP_200_OK)
 
