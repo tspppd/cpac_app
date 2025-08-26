@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import timedelta
 
 load_dotenv()
 
@@ -25,14 +26,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-# SECRET_KEY = 'django-insecure-4w4kgcfhldxw0j8ejmbpmy-0!)9!k+0g3qbi@wwloc!g=ja-$g'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG" , "False")
 
-ALLOWED_HOSTS = ["cpac-app.onrender.com", "localhost", "127.0.0.1","https://cpac-calculator-app.vercel.app"]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','').split(',')
 
-
+# ALLOWED_HOSTS = ["cpac-app.onrender.com","localhost","127.0.0.1","https://cpac-calculator-app.vercel.app"]
 
 # Application definition
 
@@ -43,9 +44,35 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'drf_yasg',
     'authen_api',
     'corsheaders',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        # 'rest_framework.permissions.IsAuthenticated', # ค่าเริ่มต้นที่บังคับให้ต้อง authenticate ทุก endpoint
+        'rest_framework.permissions.AllowAny',  # เปลี่ยนค่าเริ่มต้นให้เข้าถึงได้หมด
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30), # ระยะเวลาของ Access Token คือ 1 ชั่วโมง
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), # ระยะเวลาของ Refresh Token คือ 1 วัน
+    'ROTATE_REFRESH_TOKENS': True, # หมุนเวลา Refresh Token
+    'BLACKLIST_AFTER_ROTATION': True,  # เปิดใช้งานการตรวจสอบ blacklist
+    'ALGORITHM': 'HS256', # อัลกอริธึมสำหรับการเข้ารหัส
+    'SIGNING_KEY': SECRET_KEY, # คีย์สำหรับการเข้ารหัส    
+    'AUTH_HEADER_TYPES': ('Bearer',), # ประเภทของส่วนหัวสำหรับการอนุญาต
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',), # คลาสของสิทธิ์การเข้าสู่ระบบ
+    'UPDATE_LAST_LOGIN': True,  # อัพเดทเวลาการเข้าสู่ระบบครั้งสุดท้าย
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -56,7 +83,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
 
 ROOT_URLCONF = 'cpac_app_api.urls'
@@ -89,6 +115,21 @@ DATABASES = {
     }
 }
 
+# Supabase
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': os.getenv('DB_NAME', 'postgres'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST'),
+#         'PORT': os.getenv('DB_PORT', '6543'),
+#         'OPTIONS': {
+#             'options': '-c timezone=Asia/Bangkok'
+#         },
+#     },
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -109,12 +150,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
@@ -150,8 +192,51 @@ CSRF_TRUSTED_ORIGINS = [
     "https://cpac-app.onrender.com",
 ]
 
+
+# ตั้งค่าการอนุญาต CORS
+# อนุญาตทุกโดเมนให้เข้าถึง (เปิด CORS ทั้งหมด)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # สำหรับ dev
     "https://cpac-app.onrender.com",  # ถ้าเว็บ frontend deploy แล้ว
     "https://cpac-app.vercel.app",  # domain ของ frontend
 ]
+
+# CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
+
+
+# ถ้าต้องการกำหนด HTTP Methods ที่อนุญาต เช่น GET, POST, PUT, PATCH, DELETE
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    # "PUT",
+    "PATCH",
+    "DELETE",
+    # "OPTIONS",
+]
+
+# ถ้าต้องการกำหนด Headers ที่อนุญาต เช่น Authorization, Content-Type
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# ตั้งค่า Swagger
+# SWAGGER_SETTINGS = {
+#     'USE_SESSION_AUTH': False,  # ปิดการใช้งาน Django Login
+#     'SECURITY_DEFINITIONS': {
+#         'Bearer': {
+#             'type': 'apiKey',
+#             'name': 'Authorization',
+#             'in': 'header'
+#         }
+#     },
+#     'SECURITY': [
+#         {
+#             'Bearer': []
+#         }
+#     ]
+# }
+
