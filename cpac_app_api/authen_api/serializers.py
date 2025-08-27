@@ -10,15 +10,37 @@ from urllib.parse import urljoin
 logger = logging.getLogger(__name__)
 BASE_AUTH_URL = os.getenv('AUTH_URL')
 AUTH_PRIVATE_KEY = os.getenv('AUTH_PRIVATE_KEY')
+RECAPTCHA_SECRET_KEY= os.getenv('RECAPTCHA_SECRET_KEY')
+RECAPTCHA_SITE_KEY= os.getenv('RECAPTCHA_SITE_KEY')
 
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    recaptcha_token = serializers.CharField() # เพิ่ม field นี้เข้ามา
     def validate(self, attrs):
         username = attrs.get("username")
         password = attrs.get("password")
+        recaptcha_token = attrs.get("recaptcha_token")
 
+        # print(username,password,recaptcha_token)
+        # 1. ตรวจสอบ reCAPTCHA Token กับ Google ก่อน
+        google_recaptcha_url = "https://www.google.com/recaptcha/api/siteverify"
+        recaptcha_secret_key = RECAPTCHA_SECRET_KEY # ใส่ Secret Key ของคุณ
+        
+        # print(recaptcha_secret_key)
+        recaptcha_response = requests.post(
+            google_recaptcha_url,
+            data={'secret': recaptcha_secret_key, 'response': recaptcha_token}
+        )
+
+        # print(recaptcha_response)
+        
+        recaptcha_result = recaptcha_response.json()
+        
+        if not recaptcha_result.get("success"):
+            raise serializers.ValidationError({"recaptcha": "Failed reCAPTCHA verification."})
+            
         # print(username,password)
         # URL ของ Server ภายนอก
         auth_url =  urljoin(BASE_AUTH_URL,"api/login")
@@ -33,6 +55,7 @@ class LoginSerializer(serializers.Serializer):
         try:
             # ส่งข้อมูลไปตรวจสอบกับ Server ภายนอก
             response = requests.post(auth_url, headers=headers,json={'username': username, 'password': password})
+            print(response.text)
             # ถ้า Status Code เป็น 200 (OK)
             external_user_data = response.json()
             # print(external_user_data)

@@ -9,8 +9,7 @@ import logging
 from datetime import timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import LoginSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -68,7 +67,7 @@ class LoginAPIView(APIView):
             key='refreshtoken',
             value=refresh_token,
             httponly=True, # Production : True
-            secure=SECURE_COOKIE, # Production : True
+            secure=SECURE_COOKIE , # Production : True
             samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
             max_age=timedelta(days = refresh_token_age ).total_seconds(),
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
@@ -117,10 +116,8 @@ class LoginAPIView(APIView):
             "password": password
         }
 
-
-
         response = requests.post( login_url , headers=headers, json=data)
-        refresh_token = response.json()["access_token"]
+        # refresh_token = response.json()["access_token"]
         return response.json()
 
 
@@ -379,20 +376,10 @@ class TokenRefreshView(APIView):
                 samesite="None",
                 secure=True,
                 path="/",
-                max_age=access_token_age  # 30 นาที
+                max_age=timedelta(days = access_token_age ).total_seconds(),
             )
 
             return response
         except Exception :
             return Response({"detail":"Token is invalid or Expired" }, status=status.HTTP_401_UNAUTHORIZED)
 
-
-# class AuthCheckView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         return Response({
-#             "is_authenticated" : True,
-#             "user_data":request.user_data
-#         })
