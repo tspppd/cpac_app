@@ -26,7 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-
+SAMSITE_COOKIE= os.getenv('SAMSITE_COOKIE')
+SECURE_COOKIE= os.getenv('SECURE_COOKIE')
+DOMAIN=os.getenv('DOMAIN','')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG" , "False")
@@ -181,10 +183,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # ถ้าต้องการให้ส่ง cookie/token ไปด้วย
 CORS_ALLOW_CREDENTIALS = True
 # Http OnlyCookie
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = SECURE_COOKIE
+SESSION_COOKIE_SECURE = SECURE_COOKIE
+CSRF_COOKIE_SAMESITE = SAMSITE_COOKIE
+SESSION_COOKIE_SAMESITE = SAMSITE_COOKIE
 SESSION_COOKIE_HTTPONLY = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
@@ -192,6 +194,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://cpac-app.onrender.com",
 ]
 
+# Domain Setting
+SESSION_COOKIE_DOMAIN=DOMAIN
+CSRF_COOKIE_DOMAIN=DOMAIN
 
 # ตั้งค่าการอนุญาต CORS
 # อนุญาตทุกโดเมนให้เข้าถึง (เปิด CORS ทั้งหมด)

@@ -19,7 +19,7 @@ AUTH_PRIVATE_KEY = os.environ.get('AUTH_PRIVATE_KEY')
 API_AUTH_TOKEN = os.getenv('API_AUTH_TOKEN',"auth_token")
 SECURE_COOKIE = os.getenv('SECURE_COOKIE',True)
 SAMSITE_COOKIE = os.getenv('SAMSITE_COOKIE',"None")
-DOMAIN = os.getenv("DOMAIN")
+DOMAIN = os.getenv("DOMAIN",'')
 
 # print(SECURE_COOKIE)
 # print(SAMSITE_COOKIE)
