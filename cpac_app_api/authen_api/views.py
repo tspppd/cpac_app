@@ -19,6 +19,7 @@ AUTH_PRIVATE_KEY = os.environ.get('AUTH_PRIVATE_KEY')
 API_AUTH_TOKEN = os.getenv('API_AUTH_TOKEN',"auth_token")
 SECURE_COOKIE = os.getenv('SECURE_COOKIE',True)
 SAMSITE_COOKIE = os.getenv('SAMSITE_COOKIE',"None")
+DOMAIN = os.getenv("DOMAIN")
 
 # print(SECURE_COOKIE)
 # print(SAMSITE_COOKIE)
@@ -72,6 +73,7 @@ class LoginAPIView(APIView):
             max_age=timedelta(days = refresh_token_age ).total_seconds(),
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
+            domain=DOMAIN
         )
         response.set_cookie( 
             key=API_AUTH_TOKEN,
@@ -82,6 +84,7 @@ class LoginAPIView(APIView):
             max_age=timedelta(days = auth_token_age ).total_seconds(),
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
+            domain=DOMAIN
         )
         response.set_cookie( 
             key="access_token",
@@ -92,6 +95,7 @@ class LoginAPIView(APIView):
             max_age=timedelta(minutes= access_token_age ).total_seconds(),
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
+            domain=DOMAIN
         )
         # ส่ง Access Token และ User Data กลับไปใน JSON Body
         response.data = {
@@ -377,6 +381,7 @@ class TokenRefreshView(APIView):
                 secure=True,
                 path="/",
                 max_age=timedelta(days = access_token_age ).total_seconds(),
+                domain=DOMAIN
             )
 
             return response

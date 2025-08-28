@@ -223,6 +223,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+ACCESS_CONTROL_ALLOW_CREDENTIALS=os.getenv("ACCESS_CONTROL_ALLOW_CREDENTIALS","True")
+
 # ตั้งค่า Swagger
 # SWAGGER_SETTINGS = {
 #     'USE_SESSION_AUTH': False,  # ปิดการใช้งาน Django Login
