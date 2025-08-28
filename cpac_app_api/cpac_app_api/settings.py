@@ -230,6 +230,8 @@ CORS_ALLOW_HEADERS = [
 
 ACCESS_CONTROL_ALLOW_CREDENTIALS=os.getenv("ACCESS_CONTROL_ALLOW_CREDENTIALS","True")
 
+ACCESS_CONTROL_ALLOW_ORIGIN=os.getenv("ACCESS_CONTROL_ALLOW_ORIGIN","cpacapp.tspppd.com")
+
 # ตั้งค่า Swagger
 # SWAGGER_SETTINGS = {
 #     'USE_SESSION_AUTH': False,  # ปิดการใช้งาน Django Login
