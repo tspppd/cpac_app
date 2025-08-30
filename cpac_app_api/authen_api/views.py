@@ -188,18 +188,22 @@ class LogoutAPIView(APIView):
         response = Response({'message':"Logout Successful"}, status=status.HTTP_200_OK)
         response.delete_cookie(
             key='refreshtoken',
-            # path='/',
-            samesite="None",
+            path='/',
+            domain=DOMAIN,
+            # secure=SECURE_COOKIE , # Production : True
+            samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
         )
         response.delete_cookie(
             key='auth_token',
-            # path='/',
-            samesite="None",
+            path='/',
+            domain=DOMAIN,
+            samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
         )
         response.delete_cookie(
             key='access_token',
-            # path='/',
-            samesite="None",
+            path='/',
+            domain=DOMAIN,
+            samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
         )
         return response
         
@@ -308,14 +312,7 @@ class ManageuserAPIView(APIView):
         if not data:
             return Response({"error": "No data provided for update"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # logger = logging.getLogger(__name__)
-        # try:
-        #     data = request.data.copy()
-        #     data.pop("password",None)
-        #     data.pop("password_confirmation",None)
-        # except Exception as e:
-        #     logger.error(f"Error processing request data: {str(e)}")
-        #     return {"error": "Invalid data format"}
+
         try:
             response = requests.patch(userId_url,headers=headers,json=data)
             if not response.ok:
@@ -329,6 +326,7 @@ class ManageuserAPIView(APIView):
                 "error": "Edit user failed",
                 "details": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     def delete(self, request, userId):
         userId_url = urljoin(BASE_AUTH_URL,f"/api/users/{userId}") # ข้อมูลผู้ใช้งานตาม id / GET, PATCH,DELETE
