@@ -106,7 +106,7 @@ class LoginAPIView(APIView):
             'user_data': user_data,
             'status': authStatus,
         }
-
+        
         return response
 
 
