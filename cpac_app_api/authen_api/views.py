@@ -20,6 +20,7 @@ API_AUTH_TOKEN = os.getenv('API_AUTH_TOKEN',"auth_token")
 SECURE_COOKIE = os.getenv('SECURE_COOKIE',True)
 SAMSITE_COOKIE = os.getenv('SAMSITE_COOKIE',"None")
 DOMAIN = os.getenv("DOMAIN",'')
+VERIFY_CERTIFICATE = os.getenv('VERIFY_CERTIFICATE',True).lower() in ('true', '1', 't')
 
 # print(SECURE_COOKIE)
 # print(SAMSITE_COOKIE)
@@ -145,7 +146,7 @@ class RegisterAPIView(APIView):
 
         try:
             data = request.data
-            response = requests.post(register_url, headers=headers, json=data)
+            response = requests.post(register_url, headers=headers, json=data, verify=VERIFY_CERTIFICATE)
             
             # ถ้า Status Code เป็น 2xx ให้คืนค่า JSON ที่ได้
             if response.ok:
@@ -213,7 +214,7 @@ class UsersAPIView(APIView):
             "Content-Type": "application/json"
         }
         try:
-            response = requests.get(user_url,headers=headers)
+            response = requests.get(user_url,headers=headers, verify=VERIFY_CERTIFICATE)
             response.raise_for_status()
             if response.status_code == 401:
                 return response.json()
@@ -254,7 +255,7 @@ class UserProfileAPIView(APIView):
                 "Content-Type": "application/json"
             }
 
-            response = requests.get(userProfile_url, headers=headers)
+            response = requests.get(userProfile_url, headers=headers ,verify=VERIFY_CERTIFICATE)
             currentUser = response.json()
             return Response(currentUser  # ✅ return รายชื่อ user กลับไปด้วย
             , status=status.HTTP_200_OK)
@@ -278,7 +279,7 @@ class ManageuserAPIView(APIView):
             "Content-Type":"application/json"
         }
         try:
-            response = requests.get(userId_url,headers=headers)
+            response = requests.get(userId_url,headers=headers , verify=VERIFY_CERTIFICATE)
             response.raise_for_status()
             user = response.json()
             return Response( user  # ✅ return รายชื่อ user กลับไปด้วย
@@ -309,7 +310,7 @@ class ManageuserAPIView(APIView):
         
 
         try:
-            response = requests.patch(userId_url,headers=headers,json=data)
+            response = requests.patch(userId_url,headers=headers,json=data , verify=VERIFY_CERTIFICATE)
             if not response.ok:
                 return Response(response.text, status=response.status_code)
             response.raise_for_status()
@@ -338,7 +339,7 @@ class ManageuserAPIView(APIView):
 
         try:
             # เรียก API ภายนอกเพื่อลบ user
-            response = requests.delete(userId_url, headers=headers)
+            response = requests.delete(userId_url, headers=headers , verify=VERIFY_CERTIFICATE)
             response.raise_for_status()
             return Response(response.json(), status=status.HTTP_200_OK)
         
