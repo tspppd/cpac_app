@@ -78,7 +78,6 @@ class LoginSerializer(serializers.Serializer):
         }
 
         try:
-            print(VERIFY_CERTIFICATE)
             # ส่งข้อมูลไปตรวจสอบกับ Server ภายนอก
             response = requests.post(auth_url, headers=headers,json={'username': username, 'password': password},verify=VERIFY_CERTIFICATE)
 

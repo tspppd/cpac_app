@@ -6,9 +6,10 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urljoin
 import logging
-from datetime import timedelta
+from datetime import timedelta , datetime , timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import LoginSerializer
+import pytz
 
 
 logger = logging.getLogger(__name__)
@@ -31,9 +32,14 @@ logout_url = urljoin(BASE_AUTH_URL,'/api/logout') # ออกจากระบ�
 user_url = urljoin(BASE_AUTH_URL,'/api/users') # ข้อมูลผู้ใช้งานทั้งหมด / GET
 userProfile_url = urljoin(BASE_AUTH_URL,"/api/profile") # ข้อมูลผู้ใช้งานปัจจุบัน / GET
 
+thai_tz = pytz.timezone('Asia/Bangkok')
+current_time_gmt = datetime.now(thai_tz)
 refresh_token_age = 7 # day
 auth_token_age = 7 # day
 access_token_age = 30 # minutes
+expires_refresh_token = current_time_gmt + timedelta(days=refresh_token_age)
+expires_auth_token = current_time_gmt + timedelta(days=auth_token_age)
+expires_access_token = current_time_gmt + timedelta(minutes=access_token_age)
 
 
 class LoginAPIView(APIView):
@@ -66,7 +72,8 @@ class LoginAPIView(APIView):
             httponly=True, # Production : True
             secure=SECURE_COOKIE , # Production : True
             samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
-            max_age=timedelta(days = refresh_token_age ).total_seconds(),
+            # max_age=timedelta(days = refresh_token_age ).total_seconds(),
+            expires=expires_refresh_token,
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
             domain=DOMAIN
@@ -77,7 +84,8 @@ class LoginAPIView(APIView):
             httponly=True, # Production : True
             secure=SECURE_COOKIE, # Production : True
             samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
-            max_age=timedelta(days = auth_token_age ).total_seconds(),
+            # max_age=timedelta(days = auth_token_age ).total_seconds(),
+            expires=expires_auth_token,
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
             domain=DOMAIN
@@ -88,7 +96,8 @@ class LoginAPIView(APIView):
             httponly=True, # Production : True
             secure=SECURE_COOKIE, # Production : True
             samesite=SAMSITE_COOKIE, # Production : "None" , Dev : "Lax", "Strict"
-            max_age=timedelta(minutes= access_token_age ).total_seconds(),
+            # max_age=timedelta(minutes= access_token_age ).total_seconds(),
+            expires=expires_access_token,
             # max_age=604800, # <--- กำหนดอายุ 7 วัน (7*24*60*60 วินาที)
             path='/',
             domain=DOMAIN
@@ -374,7 +383,8 @@ class TokenRefreshView(APIView):
                 samesite="None",
                 secure=True,
                 path="/",
-                max_age=timedelta(days = access_token_age ).total_seconds(),
+                # max_age=timedelta(days = access_token_age ).total_seconds(),
+                expires=expires_access_token,
                 domain=DOMAIN
             )
 
