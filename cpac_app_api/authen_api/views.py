@@ -50,11 +50,6 @@ class LoginAPIView(APIView):
         message = serializer.validated_data.get('message')
         expires_in = serializer.validated_data.get('expires_in')
 
-        # print("refresh_token",refresh_token)
-        # print("access_token",access_token)
-        # print("user_data",user_data)
-        # print("auth_token",auth_token)
-
         if authStatus == False:
             data = {
                 "status" : authStatus,

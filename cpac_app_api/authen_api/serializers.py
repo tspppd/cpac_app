@@ -13,6 +13,7 @@ BASE_AUTH_URL = os.getenv('AUTH_URL')
 AUTH_PRIVATE_KEY = os.getenv('AUTH_PRIVATE_KEY')
 RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY')
+VERIFY_CERTIFICATE = os.getenv('VERIFY_CERTIFICATE',True).lower() in ('true', '1', 't')
 
 # Telegram
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -59,9 +60,7 @@ class LoginSerializer(serializers.Serializer):
             google_recaptcha_url,
             data={'secret': recaptcha_secret_key, 'response': recaptcha_token}
         )
-
-        # print(recaptcha_response)
-        
+        print(recaptcha_response)
         recaptcha_result = recaptcha_response.json()
         
         if not recaptcha_result.get("success"):
@@ -79,8 +78,9 @@ class LoginSerializer(serializers.Serializer):
         }
 
         try:
+            print(VERIFY_CERTIFICATE)
             # ส่งข้อมูลไปตรวจสอบกับ Server ภายนอก
-            response = requests.post(auth_url, headers=headers,json={'username': username, 'password': password})
+            response = requests.post(auth_url, headers=headers,json={'username': username, 'password': password},verify=VERIFY_CERTIFICATE)
 
             # ถ้า Status Code เป็น 200 (OK)
             external_user_data = response.json()
@@ -88,7 +88,7 @@ class LoginSerializer(serializers.Serializer):
                 refresh = RefreshToken()
                 refresh['username'] = username
                 refresh['user_data'] = external_user_data["data"]['user']
-                print(external_user_data["status"])
+                # print(external_user_data["status"])
                 if external_user_data["status"] == True:
                     message = f"Login Successful!\nUsername: {username}\nFullname: {external_user_data["data"]['user']["fullname"]}"
                     telegramAPI(message)
@@ -115,6 +115,8 @@ class LoginSerializer(serializers.Serializer):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"API request to external server failed: {str(e)}")
+            message = f"API request to external server failed\n{e}"
+            telegramAPI(message)
             raise AuthenticationFailed(detail={"message": "ไม่สามารถติดต่อ Server ภายนอกได้"})
         
 
