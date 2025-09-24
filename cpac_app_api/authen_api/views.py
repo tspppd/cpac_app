@@ -394,5 +394,5 @@ class TokenRefreshView(APIView):
 
 
 class CronJobView(APIView):
-    def post(self, request):
+    def get(self, request):
         return Response({ "message" : "Cron Jab's Refreshed" } , status=status.HTTP_200_OK)
