@@ -10,5 +10,6 @@ urlpatterns = [
     path('profile/', UserProfileAPIView.as_view(), name='userprofile'),
     path('users/<int:userId>/', ManageuserAPIView.as_view(), name='manageuser'),
     path('refresh/', TokenRefreshView.as_view(), name='refreshtoken'),
+    path('cronjob/', CronJobView.as_view(), name='cronjob'),
 
 ]

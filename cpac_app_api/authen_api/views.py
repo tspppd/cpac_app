@@ -392,3 +392,7 @@ class TokenRefreshView(APIView):
         except Exception :
             return Response({"detail":"Token is invalid or Expired" }, status=status.HTTP_401_UNAUTHORIZED)
 
+
+class CronJobView(APIView):
+    def post(self, request):
+        return Response({ "message" : "Cron Jab's Refreshed" } , status=status.HTTP_200_OK)
