@@ -125,13 +125,13 @@ class LoginSerializer(serializers.Serializer):
         except requests.exceptions.RequestException as e:
             logger.error(f"API request to external server failed: {str(e)}")
             message = f"API request to external server failed\n{e}"
-            # telegramAPI(message)
+            telegramAPI(message)
             raise AuthenticationFailed(detail={"message": "ไม่สามารถติดต่อ Server ภายนอกได้"})
-        except requests.exceptions.SSLError as e:
-            print("SSL Error ❌")
-            print(e)
-            message = f"SSL Error during external request: {str(e)}"
-            logger.error(message)
-            raise AuthenticationFailed(detail={"message": message})
+        # except requests.exceptions.SSLError as e:
+        #     print("SSL Error ❌")
+        #     print(e)
+        #     message = f"SSL Error during external request: {str(e)}"
+        #     logger.error(message)
+        #     raise AuthenticationFailed(detail={"message": message})
 
     
